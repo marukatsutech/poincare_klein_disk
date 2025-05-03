@@ -182,7 +182,7 @@ class LineKlein:
         self.x, self.y, self.z0 = 0., -1., 0.
         self.u, self.v, self.w0 = 0., 1., 0.
         self.line_klein_z0, = self.ax.plot([self.x, self.u], [self.y, self.v], [self.z0, self.w0],
-                                           linewidth=0.5, color=self.color, linestyle="--")
+                                           linewidth=1, color=self.color, linestyle="--")
 
         self.x, self.y, self.z1 = 0., -1., 1.
         self.u, self.v, self.w1 = 0., 1., 1.
@@ -234,6 +234,9 @@ class LineKlein:
 
     def get_y(self):
         return self.y_marker
+
+    def get_point(self):
+        return np.array([self.x, self.y_marker, self.z1])
 
 
 class CircleSphere:
@@ -292,16 +295,63 @@ class CircleSphere:
         if self.discriminant_circle >= 0.:
             self.z_marker = np.sqrt(self.discriminant_circle)
 
+    def get_point(self):
+        return np.array([self.x, self.y_marker, self.z_marker])
+
+
+class Line3d:
+    def __init__(self, ax, start, end, liner_width, line_style, color, alpha):
+        self.ax = ax
+        self.start = start
+        self.end = end
+        self.line_width = liner_width
+        self.line_style = line_style
+        self.color = color
+        self.alpha = alpha
+
+        self.x, self.y, self.z = self.start[0], self.start[1], self.start[2]
+        self.u, self.v, self.w = self.end[0], self.end[1], self.end[2]
+        self.line, = self.ax.plot([self.x, self.u], [self.y, self.v], [self.z, self.w],
+                                  linewidth=self.line_width, color=self.color, linestyle=self.line_style)
+
+    def set_start_point(self, start):
+        self.start[0], self.start[1], self.start[2] = start[0], start[1], start[2]
+        self.x, self.y, self.z = self.start[0], self.start[1], self.start[2]
+        self.line.set_data_3d([self.x, self.u], [self.y, self.v], [self.z, self.w])
+
+    def set_end_point(self, end):
+        self.end[0], self.end[1], self.end[2] = end[0], end[1], end[2]
+        self.u, self.v, self.w = self.end[0], self.end[1], self.end[2]
+        self.line.set_data_3d([self.x, self.u], [self.y, self.v], [self.z, self.w])
+
 
 def set_x(value):
     line_klein.set_x(value)
     circle_sphere.set_x(value)
     circle_sphere.set_y(line_klein.get_y())
 
+    p_c = circle_sphere.get_point()
+    line_auxiliary_poincare.set_end_point(p_c)
+
+    p_k = line_klein.get_point()
+    line_auxiliary_klein.set_end_point(p_k)
+
+    line_auxiliary.set_start_point(p_k)
+    line_auxiliary.set_end_point(p_c)
+
 
 def set_y(value):
     line_klein.set_y(value)
     circle_sphere.set_y(line_klein.get_y())
+
+    p_c = circle_sphere.get_point()
+    line_auxiliary_poincare.set_end_point(p_c)
+
+    p_k = line_klein.get_point()
+    line_auxiliary_klein.set_end_point(p_k)
+
+    line_auxiliary.set_start_point(p_k)
+    line_auxiliary.set_end_point(p_c)
 
 
 def create_parameter_setter():
@@ -393,6 +443,18 @@ if __name__ == "__main__":
     line_klein = LineKlein(ax0, "blue", 1)
 
     circle_sphere = CircleSphere(ax0, "magenta", 1)
+
+    p_s = np.array([0., 0., -1.])
+    p_end = np.array([0., 0., 1.])
+    line_auxiliary_poincare = Line3d(ax0, p_s, p_end,  1, "--", "magenta", 1)
+
+    p_s = np.array([0., 0., 0.])
+    p_end = np.array([0., 0., 1.])
+    line_auxiliary_klein = Line3d(ax0, p_s, p_end,  1, "--", "blue", 1)
+
+    p_s = np.array([0., 0., 1.])
+    p_end = np.array([0., 0., 1.])
+    line_auxiliary = Line3d(ax0, p_s, p_end, 0.5, "--", "black", 1)
 
     anim = animation.FuncAnimation(fig, update, interval=100, save_count=100)
     root.mainloop()
