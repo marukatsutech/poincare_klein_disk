@@ -224,13 +224,16 @@ class LineKlein:
                 y_c = np.sqrt(self.discriminant)
                 v_c = -np.sqrt(self.discriminant)
 
-                if self.y_marker > y_c:
+                if self.y_marker >= y_c:
                     self.y_marker = y_c
 
-                if self.y_marker < v_c:
+                if self.y_marker <= v_c:
                     self.y_marker = v_c
 
                 self.marker.set_data_3d([self.x], [self.y_marker], [self.z1])
+
+    def get_y(self):
+        return self.y_marker
 
 
 class CircleSphere:
@@ -239,59 +242,66 @@ class CircleSphere:
         self.color = color
         self.alpha = alpha
 
-        self.radius = 1.
+        self.radius_sphere = 1.
+        self.radius_circle = 1.
         self.x = 0.
+
+        self.discriminant = self.radius_sphere ** 2 - self.x ** 2
 
         self.angle_space = np.arange(0, 360)
 
         self.x_circle = self.angle_space * 0.
-        self.y_circle = self.radius * np.cos(self.angle_space * np.pi / 180.)
-        self.z_circle = self.radius * np.sin(self.angle_space * np.pi / 180.)
+        self.y_circle = self.radius_sphere * np.cos(self.angle_space * np.pi / 180.)
+        self.z_circle = self.radius_sphere * np.sin(self.angle_space * np.pi / 180.)
 
         self.plt_circle, = self.ax.plot(self.x_circle, self.y_circle, self.z_circle,
                                         linewidth=1, linestyle="-", color=self.color)
+
+        self.y_marker = 0.
+        self.z_marker = 1.
+        self.marker, = self.ax.plot(self.x, self.y_marker, self.z_marker, marker="o", markersize=3, color=self.color)
 
     def set_x(self, value):
         if -1. <= value <= 1.:
             self.x = value
 
-            r = 1.
-
-            discriminant = r ** 2 - self.x ** 2
-            if discriminant >= 0.:
-                self.radius = np.sqrt(discriminant)
+            self.discriminant = self.radius_sphere ** 2 - self.x ** 2
+            if self.discriminant >= 0.:
+                self.radius_circle = np.sqrt(self.discriminant)
 
                 self.x_circle = self.angle_space * 0. + self.x
-                self.y_circle = self.radius * np.cos(self.angle_space * np.pi / 180.)
-                self.z_circle = self.radius * np.sin(self.angle_space * np.pi / 180.)
+                self.y_circle = self.radius_circle * np.cos(self.angle_space * np.pi / 180.)
+                self.z_circle = self.radius_circle * np.sin(self.angle_space * np.pi / 180.)
 
                 self.plt_circle.set_data_3d(np.array(self.x_circle),
                                             np.array(self.y_circle),
                                             np.array(self.z_circle))
 
+                self._update_z()
+                self.marker.set_data_3d([self.x], [self.y_marker], [self.z_marker])
 
-class DotKlein:
-    def __init__(self, ax, color, alpha):
-        self.ax = ax
-        self.color = color
-        self.alpha = alpha
+    def set_y(self, value):
+        self.y_marker = value
 
-        self.x, self.y, self.z1 = 0., 0., 1.
-        self.marker, = self.ax.plot(self.x, self.y, self.z1, marker="o", markersize=3, color=self.color)
+        self._update_z()
+        self.marker.set_data_3d([self.x], [self.y_marker], [self.z_marker])
 
-    def set_x(self, value):
-        if -1. <= value <= 1.:
-            self.x = value
+    def _update_z(self):
+        self.discriminant_circle = self.radius_circle ** 2 - self.y_marker ** 2
+
+        if self.discriminant_circle >= 0.:
+            self.z_marker = np.sqrt(self.discriminant_circle)
 
 
 def set_x(value):
     line_klein.set_x(value)
     circle_sphere.set_x(value)
+    circle_sphere.set_y(line_klein.get_y())
 
 
 def set_y(value):
     line_klein.set_y(value)
-    # circle_sphere.set_y(value)
+    circle_sphere.set_y(line_klein.get_y())
 
 
 def create_parameter_setter():
