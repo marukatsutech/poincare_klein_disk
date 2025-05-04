@@ -348,6 +348,9 @@ class Point3d:
         self.point = point
         self.marker.set_data_3d([self.point[0]], [self.point[1]], [self.point[2]])
 
+    def set_size(self, value):
+        self.marker.set_markersize(value)
+
 
 class CircleAuxiliary:
     def __init__(self, ax, point, radius, color, alpha):
@@ -402,7 +405,39 @@ class Hyperbola:
                                              linewidth=1, linestyle="-", color=self.color)
         # self.plt_hyperbola2, = self.ax.plot(self.x2, self.y, self.z2, linewidth=1, linestyle="-", color=self.color)
 
+    def rotate(self, angle):
+        rot_matrix = Rotation.from_rotvec(angle * vector_z_axis)
 
+        x1a_rotated = []
+        ya_rotated = []
+        z1a_rotated = []
+
+        x1b_rotated = []
+        yb_rotated = []
+        z1b_rotated = []
+
+        for i in range(len(self.z1)):
+            vector_a = np.array([self.x1a[i], self.y[i], self.z1[i]])
+            vector_b = np.array([self.x1b[i], self.y[i], self.z1[i]])
+
+            vector_a_rotated = rot_matrix.apply(vector_a)
+            vector_b_rotated = rot_matrix.apply(vector_b)
+
+            x1a_rotated.append(vector_a_rotated[0])
+            ya_rotated.append(vector_a_rotated[1])
+            z1a_rotated.append(vector_a_rotated[2])
+
+            x1b_rotated.append(vector_b_rotated[0])
+            yb_rotated.append(vector_b_rotated[1])
+            z1b_rotated.append(vector_b_rotated[2])
+
+        self.plt_hyperbola1a.set_data_3d(np.array(x1a_rotated),
+                                         np.array(ya_rotated),
+                                         np.array(z1a_rotated))
+
+        self.plt_hyperbola1b.set_data_3d(np.array(x1b_rotated),
+                                         np.array(yb_rotated),
+                                         np.array(z1b_rotated))
 
 
 def set_x(value):
@@ -451,8 +486,18 @@ def set_diagram():
         p_circle_aux = np.array([0., 0., p_hyperboloid[2]])
         r_circle_aux = np.linalg.norm(np.array([p_hyperboloid[0], p_hyperboloid[1]]))
         circle_hyperboloid.set_point_radius(p_circle_aux, r_circle_aux)
+
+        point_hyperboloid.set_size(3)
     else:
-        pass
+        line_auxiliary_poincare_extend.set_end_point(np.array([0., 0., -1.]))
+        line_auxiliary_klein_extend.set_end_point(np.array([0., 0., 0.]))
+        circle_hyperboloid.set_point_radius(np.array([0., 0., 0.]), 0.)
+        point_hyperboloid.set_size(0)
+
+    vector_angle_p_k = np.array(p_k[0], p_k[1])
+    if np.linalg.norm(vector_angle_p_k) > 0:
+        angle_hyperbola = np.arctan2(p_k[1], p_k[0])
+        hyperbola.rotate(angle_hyperbola)
 
 
 def create_parameter_setter():
