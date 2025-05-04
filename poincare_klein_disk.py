@@ -324,6 +324,28 @@ class Line3d:
         self.u, self.v, self.w = self.end[0], self.end[1], self.end[2]
         self.line.set_data_3d([self.x, self.u], [self.y, self.v], [self.z, self.w])
 
+    def get_vector(self):
+        return self.end - self.start
+
+    def get_length(self):
+        vector = self.end - self.start
+        return np.linalg.norm(vector)
+
+
+class Point3d:
+    def __init__(self, ax, point, color, alpha):
+        self.ax = ax
+        self.point = point
+        self.color = color
+        self.alpha = alpha
+
+        self.marker, = self.ax.plot(self.point[0], self.point[1], self.point[2],
+                                    marker="o", markersize=3, color=self.color)
+
+    def set_point(self, point):
+        self.point = point
+        self.marker.set_data_3d([self.point[0]], [self.point[1]], [self.point[2]])
+
 
 def set_x(value):
     line_klein.set_x(value)
@@ -336,8 +358,23 @@ def set_x(value):
     p_k = line_klein.get_point()
     line_auxiliary_klein.set_end_point(p_k)
 
-    line_auxiliary.set_start_point(p_k)
-    line_auxiliary.set_end_point(p_c)
+    line_auxiliary_p2p.set_start_point(p_k)
+    line_auxiliary_p2p.set_end_point(p_c)
+
+    vector_p = line_auxiliary_poincare.get_vector()
+    x_p = vector_p[0] / vector_p[2]
+    y_p = vector_p[1] / vector_p[2]
+    z_p = vector_p[2] / vector_p[2] - 1.
+    point_poincare.set_point(np.array([x_p, y_p, z_p]))
+
+    length_p2p = line_auxiliary_p2p.get_length()
+    if length_p2p != 0:
+        vector_line_aux_poincare_extend = line_auxiliary_poincare.get_vector() / (1. - length_p2p)
+        vector_line_aux_poincare_extend[2] -= 1.
+        line_auxiliary_poincare_extend.set_end_point(vector_line_aux_poincare_extend)
+
+        vector_line_aux_klein_extend = line_auxiliary_klein.get_vector() / (1. - length_p2p)
+        line_auxiliary_klein_extend.set_end_point(vector_line_aux_klein_extend)
 
 
 def set_y(value):
@@ -350,8 +387,23 @@ def set_y(value):
     p_k = line_klein.get_point()
     line_auxiliary_klein.set_end_point(p_k)
 
-    line_auxiliary.set_start_point(p_k)
-    line_auxiliary.set_end_point(p_c)
+    line_auxiliary_p2p.set_start_point(p_k)
+    line_auxiliary_p2p.set_end_point(p_c)
+
+    vector_p = line_auxiliary_poincare.get_vector()
+    x_p = vector_p[0] / vector_p[2]
+    y_p = vector_p[1] / vector_p[2]
+    z_p = vector_p[2] / vector_p[2] - 1.
+    point_poincare.set_point(np.array([x_p, y_p, z_p]))
+
+    length_p2p = line_auxiliary_p2p.get_length()
+    if length_p2p != 0:
+        vector_line_aux_poincare_extend = line_auxiliary_poincare.get_vector() / (1. - length_p2p)
+        vector_line_aux_poincare_extend[2] -= 1.
+        line_auxiliary_poincare_extend.set_end_point(vector_line_aux_poincare_extend)
+
+        vector_line_aux_klein_extend = line_auxiliary_klein.get_vector() / (1. - length_p2p)
+        line_auxiliary_klein_extend.set_end_point(vector_line_aux_klein_extend)
 
 
 def create_parameter_setter():
@@ -454,7 +506,17 @@ if __name__ == "__main__":
 
     p_s = np.array([0., 0., 1.])
     p_end = np.array([0., 0., 1.])
-    line_auxiliary = Line3d(ax0, p_s, p_end, 0.5, "--", "black", 1)
+    line_auxiliary_p2p = Line3d(ax0, p_s, p_end, 0.5, "--", "black", 1)
+
+    point_poincare = Point3d(ax0, np.array([0., 0., 0.]), "red", 1)
+
+    p_s = np.array([0., 0., -1.])
+    p_end = np.array([0., 0., 1.])
+    line_auxiliary_poincare_extend = Line3d(ax0, p_s, p_end, 0.5, "--", "magenta", 1)
+
+    p_s = np.array([0., 0., 0.])
+    p_end = np.array([0., 0., 1.])
+    line_auxiliary_klein_extend = Line3d(ax0, p_s, p_end, 0.5, "--", "blue", 1)
 
     anim = animation.FuncAnimation(fig, update, interval=100, save_count=100)
     root.mainloop()
