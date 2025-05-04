@@ -1,4 +1,4 @@
-""" Poincare disk and Klein disk """
+""" Poincare disk, Klein disk and hyperboloid """
 import numpy as np
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
@@ -25,7 +25,7 @@ vector_y_axis = np.array([0., 1., 0.])
 vector_z_axis = np.array([0., 0., 1.])
 
 """ Create figure and axes """
-title_ax0 = "Poincare disk and Klein disk"
+title_ax0 = "Poincare disk, Klein disk and hyperboloid"
 title_tk = title_ax0
 
 x_min = -4.
@@ -100,7 +100,7 @@ class Hyperboloid:
         self.alpha = alpha
 
         # Define the range of parameters
-        u = np.linspace(-2, 2, 100)  # Controls the vertical expansion
+        u = np.linspace(-2, 3, 100)  # Controls the vertical expansion
         v = np.linspace(0, 2 * np.pi, 100)  # Circular rotation
         U, V = np.meshgrid(u, v)
 
@@ -136,12 +136,13 @@ class UnitSphere:
 
 
 class CircularDisk:
-    def __init__(self, ax, offset, color, edge_color, alpha):
+    def __init__(self, ax, offset, color, edge_color, alpha, label):
         self.ax = ax
         self.offset = offset
         self.color = color
         self.edge_color = edge_color
         self.alpha = alpha
+        self.label = label
 
         self .radius = 1.
 
@@ -166,14 +167,15 @@ class CircularDisk:
         self.z_circle = self.angle_space * 0.  + self.offset
 
         self.plt_circle, = self.ax.plot(self.x_circle, self.y_circle, self.z_circle,
-                                        linewidth=1, linestyle="-", color=self.edge_color)
+                                        linewidth=2, linestyle="-", color=self.edge_color, label=self.label)
 
 
 class LineKlein:
-    def __init__(self, ax, color, alpha):
+    def __init__(self, ax, color, alpha, label):
         self.ax = ax
         self.color = color
         self.alpha = alpha
+        self.label = label
 
         self.r = 1.
         self.x = 0.
@@ -187,7 +189,7 @@ class LineKlein:
         self.x, self.y, self.z1 = 0., -1., 1.
         self.u, self.v, self.w1 = 0., 1., 1.
         self.line_klein_z1, = self.ax.plot([self.x, self.u], [self.y, self.v], [self.z1, self.w1],
-                                           linewidth=1, color=self.color, linestyle="-")
+                                           linewidth=2, color=self.color, linestyle="-", label=self.label)
 
         self.y_marker = 0.
         self.marker, = self.ax.plot(self.x, self.y_marker, self.z1, marker="o", markersize=3, color=self.color)
@@ -347,40 +349,78 @@ class Point3d:
         self.marker.set_data_3d([self.point[0]], [self.point[1]], [self.point[2]])
 
 
+class CircleAuxiliary:
+    def __init__(self, ax, point, radius, color, alpha):
+        self.ax = ax
+        self.point = point
+        self.radius = radius
+        self.color = color
+        self.alpha = alpha
+
+        self.angle_space = np.arange(0, 360)
+
+        self.x_circle = self.radius * np.cos(self.angle_space * np.pi / 180.)
+        self.y_circle = self.radius * np.sin(self.angle_space * np.pi / 180.)
+        self.z_circle = self.angle_space * 0. + self.point[2]
+
+        self.plt_circle, = self.ax.plot(self.x_circle, self.y_circle, self.z_circle,
+                                        linewidth=1, linestyle=":", color=self.color)
+
+    def set_point_radius(self, point, radius):
+        self.point = point
+        self.radius = radius
+
+        self.x_circle = self.radius * np.cos(self.angle_space * np.pi / 180.)
+        self.y_circle = self.radius * np.sin(self.angle_space * np.pi / 180.)
+        self.z_circle = self.angle_space * 0. + self.point[2]
+
+        self.plt_circle.set_data_3d(np.array(self.x_circle),
+                                    np.array(self.y_circle),
+                                    np.array(self.z_circle))
+
+
+class Hyperbola:
+    def __init__(self, ax, color, alpha):
+        self.ax = ax
+        self.color = color
+        self.alpha = alpha
+
+        a, b = 1, 1
+
+        self.z1 = np.linspace(a, 10, 600)   # Upper branch
+        # self.z2 = np.linspace(-5, -a, 200)      # Upper branch
+
+        self.x1a = np.sqrt((self.z1 ** 2 / a ** 2 - 1) * b ** 2)
+        self.x1b = - np.sqrt((self.z1 ** 2 / a ** 2 - 1) * b ** 2)
+        # self.x2 = np.sqrt((self.z2 ** 2 / a ** 2 - 1) * b ** 2)
+
+        self.y = self.z1 * 0.
+
+        self.plt_hyperbola1a, = self.ax.plot(self.x1a, self.y, self.z1,
+                                             linewidth=1, linestyle="-", color=self.color, label="Hyperbola")
+        self.plt_hyperbola1b, = self.ax.plot(self.x1b, self.y, self.z1,
+                                             linewidth=1, linestyle="-", color=self.color)
+        # self.plt_hyperbola2, = self.ax.plot(self.x2, self.y, self.z2, linewidth=1, linestyle="-", color=self.color)
+
+
+
+
 def set_x(value):
     line_klein.set_x(value)
     circle_sphere.set_x(value)
     circle_sphere.set_y(line_klein.get_y())
 
-    p_c = circle_sphere.get_point()
-    line_auxiliary_poincare.set_end_point(p_c)
-
-    p_k = line_klein.get_point()
-    line_auxiliary_klein.set_end_point(p_k)
-
-    line_auxiliary_p2p.set_start_point(p_k)
-    line_auxiliary_p2p.set_end_point(p_c)
-
-    vector_p = line_auxiliary_poincare.get_vector()
-    x_p = vector_p[0] / vector_p[2]
-    y_p = vector_p[1] / vector_p[2]
-    z_p = vector_p[2] / vector_p[2] - 1.
-    point_poincare.set_point(np.array([x_p, y_p, z_p]))
-
-    length_p2p = line_auxiliary_p2p.get_length()
-    if length_p2p != 0:
-        vector_line_aux_poincare_extend = line_auxiliary_poincare.get_vector() / (1. - length_p2p)
-        vector_line_aux_poincare_extend[2] -= 1.
-        line_auxiliary_poincare_extend.set_end_point(vector_line_aux_poincare_extend)
-
-        vector_line_aux_klein_extend = line_auxiliary_klein.get_vector() / (1. - length_p2p)
-        line_auxiliary_klein_extend.set_end_point(vector_line_aux_klein_extend)
+    set_diagram()
 
 
 def set_y(value):
     line_klein.set_y(value)
     circle_sphere.set_y(line_klein.get_y())
 
+    set_diagram()
+
+
+def set_diagram():
     p_c = circle_sphere.get_point()
     line_auxiliary_poincare.set_end_point(p_c)
 
@@ -397,7 +437,7 @@ def set_y(value):
     point_poincare.set_point(np.array([x_p, y_p, z_p]))
 
     length_p2p = line_auxiliary_p2p.get_length()
-    if length_p2p != 0:
+    if length_p2p < 1:
         vector_line_aux_poincare_extend = line_auxiliary_poincare.get_vector() / (1. - length_p2p)
         vector_line_aux_poincare_extend[2] -= 1.
         line_auxiliary_poincare_extend.set_end_point(vector_line_aux_poincare_extend)
@@ -405,10 +445,19 @@ def set_y(value):
         vector_line_aux_klein_extend = line_auxiliary_klein.get_vector() / (1. - length_p2p)
         line_auxiliary_klein_extend.set_end_point(vector_line_aux_klein_extend)
 
+        p_hyperboloid = line_auxiliary_klein_extend.get_vector()
+        point_hyperboloid.set_point(p_hyperboloid)
+
+        p_circle_aux = np.array([0., 0., p_hyperboloid[2]])
+        r_circle_aux = np.linalg.norm(np.array([p_hyperboloid[0], p_hyperboloid[1]]))
+        circle_hyperboloid.set_point_radius(p_circle_aux, r_circle_aux)
+    else:
+        pass
+
 
 def create_parameter_setter():
     # Position of a line on Klein disk
-    frm_klein = ttk.Labelframe(root, relief="ridge", text="x, y on Klein disk)", labelanchor='n')
+    frm_klein = ttk.Labelframe(root, relief="ridge", text="x, y on Klein disk", labelanchor='n')
     frm_klein.pack(side="left", fill=tk.Y)
 
     lbl_x_klein = tk.Label(frm_klein, text="x (line)")
@@ -464,7 +513,7 @@ def update_diagrams():
 
 def reset():
     global is_play
-    cnt.reset()
+    # cnt.reset()
     if is_play:
         is_play = not is_play
 
@@ -476,23 +525,24 @@ def switch():
 
 def update(f):
     if is_play:
-        cnt.count_up()
+        # cnt.count_up()
         update_diagrams()
 
 
 """ main loop """
 if __name__ == "__main__":
-    cnt = Counter(ax=ax0, is3d=True, xy=np.array([x_min, y_max]), z=z_max, label="Step=")
+    # cnt = Counter(ax=ax0, is3d=True, xy=np.array([x_min, y_max]), z=z_max, label="Step=")
     draw_static_diagrams()
-    create_animation_control()
+    # create_animation_control()
     create_parameter_setter()
 
     hyperboloid = Hyperboloid(ax0, "viridis", "none", 0.2)
     unit_sphere = UnitSphere(ax0, "plasma", "none", 0.2)
-    poincare_disk = CircularDisk(ax0, 0., "pink", "pink", 0.4)
-    klein_disk = CircularDisk(ax0, 1., "skyblue", "skyblue", 0.4)
 
-    line_klein = LineKlein(ax0, "blue", 1)
+    poincare_disk = CircularDisk(ax0, 0., "pink", "pink", 0.4, "Poincare disk")
+    klein_disk = CircularDisk(ax0, 1., "skyblue", "skyblue", 0.4, "Klein disk")
+
+    line_klein = LineKlein(ax0, "blue", 1, "Straight line on Klein disk")
 
     circle_sphere = CircleSphere(ax0, "magenta", 1)
 
@@ -517,6 +567,14 @@ if __name__ == "__main__":
     p_s = np.array([0., 0., 0.])
     p_end = np.array([0., 0., 1.])
     line_auxiliary_klein_extend = Line3d(ax0, p_s, p_end, 0.5, "--", "blue", 1)
+
+    point_hyperboloid = Point3d(ax0, np.array([0., 0., 1.]), "green", 1)
+
+    circle_hyperboloid = CircleAuxiliary(ax0, np.array([0., 0., 1.]), 0., "lime", 1)
+
+    hyperbola = Hyperbola(ax0, "lime", 1)
+
+    ax0.legend(loc='lower right', fontsize=8)
 
     anim = animation.FuncAnimation(fig, update, interval=100, save_count=100)
     root.mainloop()
