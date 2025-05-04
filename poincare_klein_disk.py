@@ -5,7 +5,6 @@ import matplotlib.animation as animation
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import tkinter as tk
 from tkinter import ttk
-from matplotlib.patches import Circle
 from scipy.spatial.transform import Rotation
 import mpl_toolkits.mplot3d.art3d as art3d
 from mpl_toolkits.mplot3d import proj3d
@@ -440,6 +439,45 @@ class Hyperbola:
                                          np.array(z1b_rotated))
 
 
+class Path:
+    def __init__(self, ax, liner_width, line_style, color, alpha, label):
+        self.ax = ax
+        self.line_width = liner_width
+        self.line_style = line_style
+        self.color = color
+        self.alpha = alpha
+        self.label = label
+
+        self.x_path = []
+        self.y_path = []
+        self.z_path = []
+
+        self.path, = self.ax.plot(np.array(self.x_path), np.array(self.y_path), np.array(self.z_path),
+                                  linewidth=self.line_width, linestyle=self.line_style,
+                                  color=self.color, alpha=self.alpha, label=self.label)
+
+    def append(self, x, y, z):
+        self.x_path.append(x)
+        self.y_path.append(y)
+        self.z_path.append(z)
+
+        self._update_draw()
+
+    def clear(self):
+        self.x_path = []
+        self.y_path = []
+        self.z_path = []
+
+        self._update_draw()
+
+    def _update_draw(self):
+        # self.path.set_xdata(np.array(self.x_path, dtype=np.float64))
+        # self.path.set_ydata(np.array(self.y_path, dtype=np.float64))
+        # self.path.set_3d_properties(np.array(self.z_path, dtype=np.float64))
+
+        self.path.set_data_3d(np.array(self.x_path), np.array(self.y_path), np.array(self.z_path))
+
+
 def set_x(value):
     line_klein.set_x(value)
     circle_sphere.set_x(value)
@@ -488,16 +526,28 @@ def set_diagram():
         circle_hyperboloid.set_point_radius(p_circle_aux, r_circle_aux)
 
         point_hyperboloid.set_size(3)
+
+        path_hyperboloid.append(p_hyperboloid[0], p_hyperboloid[1], p_hyperboloid[2])
     else:
         line_auxiliary_poincare_extend.set_end_point(np.array([0., 0., -1.]))
         line_auxiliary_klein_extend.set_end_point(np.array([0., 0., 0.]))
         circle_hyperboloid.set_point_radius(np.array([0., 0., 0.]), 0.)
         point_hyperboloid.set_size(0)
 
+        path_hyperboloid.append(np.nan, np.nan, np.nan)
+
     vector_angle_p_k = np.array(p_k[0], p_k[1])
+
     if np.linalg.norm(vector_angle_p_k) > 0:
         angle_hyperbola = np.arctan2(p_k[1], p_k[0])
         hyperbola.rotate(angle_hyperbola)
+
+    path_poincare.append(x_p, y_p, z_p)
+
+
+def clear_path():
+    path_poincare.clear()
+    path_hyperboloid.clear()
 
 
 def create_parameter_setter():
@@ -526,6 +576,9 @@ def create_parameter_setter():
         command=lambda: set_y(float(var_y_klein.get())), width=5
     )
     spn_y_klein.pack(side="left")
+
+    btn_clear = tk.Button(root, text="Clear path", command=lambda: clear_path())
+    btn_clear.pack(side="left")
 
 
 def create_animation_control():
@@ -618,6 +671,9 @@ if __name__ == "__main__":
     circle_hyperboloid = CircleAuxiliary(ax0, np.array([0., 0., 1.]), 0., "lime", 1)
 
     hyperbola = Hyperbola(ax0, "lime", 1)
+
+    path_poincare = Path(ax0, 2, "-", "red", 1, "Straight line on Poincare disk")
+    path_hyperboloid = Path(ax0, 2, "-", "green", 1, "Straight line on hyperboloid")
 
     ax0.legend(loc='lower right', fontsize=8)
 
