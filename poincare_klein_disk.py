@@ -170,11 +170,12 @@ class CircularDisk:
 
 
 class LineKlein:
-    def __init__(self, ax, color, alpha, label):
+    def __init__(self, ax, color, line_style, line_width, alpha):
         self.ax = ax
         self.color = color
+        self.line_style = line_style
+        self.line_width = line_width
         self.alpha = alpha
-        self.label = label
 
         self.r = 1.
         self.x = 0.
@@ -183,12 +184,12 @@ class LineKlein:
         self.x, self.y, self.z0 = 0., -1., 0.
         self.u, self.v, self.w0 = 0., 1., 0.
         self.line_klein_z0, = self.ax.plot([self.x, self.u], [self.y, self.v], [self.z0, self.w0],
-                                           linewidth=1, color=self.color, linestyle="--")
+                                           linewidth=self.line_width, color=self.color, linestyle=self.line_style)
 
         self.x, self.y, self.z1 = 0., -1., 1.
         self.u, self.v, self.w1 = 0., 1., 1.
         self.line_klein_z1, = self.ax.plot([self.x, self.u], [self.y, self.v], [self.z1, self.w1],
-                                           linewidth=2, color=self.color, linestyle="-", label=self.label)
+                                           linewidth=self.line_width, color=self.color, linestyle=self.line_style)
 
         self.y_marker = 0.
         self.marker, = self.ax.plot(self.x, self.y_marker, self.z1, marker="o", markersize=3, color=self.color)
@@ -542,10 +543,12 @@ def set_diagram():
         angle_hyperbola = np.arctan2(p_k[1], p_k[0])
         hyperbola.rotate(angle_hyperbola)
 
+    path_klein.append(p_k[0], p_k[1], p_k[2])
     path_poincare.append(x_p, y_p, z_p)
 
 
 def clear_path():
+    path_klein.clear()
     path_poincare.clear()
     path_hyperboloid.clear()
 
@@ -640,7 +643,7 @@ if __name__ == "__main__":
     poincare_disk = CircularDisk(ax0, 0., "pink", "pink", 0.4, "Poincare disk")
     klein_disk = CircularDisk(ax0, 1., "skyblue", "skyblue", 0.4, "Klein disk")
 
-    line_klein = LineKlein(ax0, "blue", 1, "Straight line on Klein disk")
+    line_klein = LineKlein(ax0, "blue", "--", 1, 1)
 
     circle_sphere = CircleSphere(ax0, "magenta", 1)
 
@@ -672,6 +675,7 @@ if __name__ == "__main__":
 
     hyperbola = Hyperbola(ax0, "lime", 1)
 
+    path_klein = Path(ax0, 2, "-", "blue", 1, "Straight line on on Klein disk")
     path_poincare = Path(ax0, 2, "-", "red", 1, "Straight line on Poincare disk")
     path_hyperboloid = Path(ax0, 2, "-", "green", 1, "Straight line on hyperboloid")
 
